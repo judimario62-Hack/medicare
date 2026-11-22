@@ -1,0 +1,33 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Model;
+
+class Room extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'name',
+        'location',
+        'capacity',
+        'is_active',
+        'image_path',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'capacity' => 'integer',
+            'is_active' => 'boolean',
+        ];
+    }
+
+    public function appointments(): HasMany
+    {
+        return $this->hasMany(Appointment::class);
+    }
+}

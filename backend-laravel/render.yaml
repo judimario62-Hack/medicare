@@ -1,0 +1,76 @@
+databases:
+  - name: medicare-postgres
+    databaseName: medicare
+    user: medicare_user
+    plan: free
+    region: frankfurt
+
+services:
+  - type: web
+    name: medicare-app
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /up
+    envVars:
+      - key: APP_NAME
+        value: MediCare
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_TIMEZONE
+        value: Indian/Antananarivo
+      - key: APP_KEY
+        sync: false
+      - key: APP_URL
+        sync: false
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        fromDatabase:
+          name: medicare-postgres
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: medicare-postgres
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: medicare-postgres
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: medicare-postgres
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: medicare-postgres
+          property: password
+      - key: SESSION_DRIVER
+        value: database
+      - key: SESSION_SECURE_COOKIE
+        value: "true"
+      - key: CACHE_STORE
+        value: database
+      - key: QUEUE_CONNECTION
+        value: sync
+      - key: MEDICARE_ADMIN_NAME
+        sync: false
+      - key: MEDICARE_ADMIN_EMAIL
+        sync: false
+      - key: MEDICARE_ADMIN_PASSWORD
+        sync: false
+      - key: MEDICARE_DOCTOR_NAME
+        sync: false
+      - key: MEDICARE_DOCTOR_EMAIL
+        sync: false
+      - key: MEDICARE_DOCTOR_PASSWORD
+        sync: false
+      - key: MEDICARE_STAFF_NAME
+        sync: false
+      - key: MEDICARE_STAFF_EMAIL
+        sync: false
+      - key: MEDICARE_STAFF_PASSWORD
+        sync: false

@@ -1,0 +1,278 @@
+﻿
+========== 2026_11_07_065934_create_appointments_table.php ==========
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('appointments', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('patient_id')->constrained()->restrictOnDelete();
+            $table->foreignId('doctor_id')->constrained()->restrictOnDelete();
+            $table->foreignId('room_id')->nullable()->constrained()->nullOnDelete();
+            $table->dateTime('starts_at');
+            $table->dateTime('ends_at');
+            $table->string('status', 20)->default('scheduled');
+            $table->text('reason')->nullable();
+            $table->timestamps();
+
+            $table->index(['doctor_id', 'starts_at']);
+            $table->index(['room_id', 'starts_at']);
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('appointments');
+    }
+};
+
+========== 2026_11_07_070836_create_consultations_table.php ==========
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+   public function up(): void
+{
+    Schema::create('consultations', function (Blueprint $table) {
+        $table->id();
+
+        $table->foreignId('appointment_id')
+            ->unique()
+            ->constrained()
+            ->restrictOnDelete();
+
+        $table->text('subjective')->nullable();
+        $table->text('objective')->nullable();
+        $table->text('assessment')->nullable();
+        $table->text('plan')->nullable();
+        $table->timestamps();
+    });
+}
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('consultations');
+    }
+};
+
+========== 2026_11_07_071840_create_vital_signs_table.php ==========
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('vital_signs', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('patient_id')->constrained()->restrictOnDelete();
+            $table->foreignId('consultation_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('recorded_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('type', 50);
+            $table->decimal('value', 12, 3);
+            $table->string('unit', 30)->nullable();
+            $table->dateTime('measured_at');
+            $table->text('notes')->nullable();
+            $table->timestamps();
+
+            $table->index(['patient_id', 'measured_at']);
+            $table->index(['consultation_id', 'type']);
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('vital_signs');
+    }
+};
+
+========== 2026_11_07_072020_create_invoices_table.php ==========
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('invoices', function (Blueprint $table) {
+            $table->id();
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('invoices');
+    }
+};
+
+========== 2026_11_07_072304_add_billing_fields_to_invoices_table.php ==========
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::table('invoices', function (Blueprint $table) {
+            $table->foreignId('patient_id')->constrained()->restrictOnDelete();
+            $table->foreignId('appointment_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('invoice_number')->unique();
+            $table->date('issued_at')->nullable();
+            $table->date('due_at')->nullable();
+            $table->string('status', 20)->default('draft');
+            $table->char('currency', 3)->default('EUR');
+            $table->decimal('subtotal', 12, 2)->default(0);
+            $table->decimal('tax_total', 12, 2)->default(0);
+            $table->decimal('total', 12, 2)->default(0);
+            $table->text('notes')->nullable();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::table('invoices', function (Blueprint $table) {
+            $table->dropConstrainedForeignId('patient_id');
+            $table->dropConstrainedForeignId('appointment_id');
+            $table->dropConstrainedForeignId('created_by');
+            $table->dropUnique(['invoice_number']);
+            $table->dropColumn([
+                'invoice_number',
+                'issued_at',
+                'due_at',
+                'status',
+                'currency',
+                'subtotal',
+                'tax_total',
+                'total',
+                'notes',
+            ]);
+        });
+    }
+};
+
+========== 2026_11_07_072305_create_invoice_items_table.php ==========
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('invoice_items', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('invoice_id')->constrained()->restrictOnDelete();
+            $table->string('description');
+            $table->decimal('quantity', 10, 2)->default(1);
+            $table->decimal('unit_price', 12, 2);
+            $table->decimal('tax_rate', 5, 2)->default(0);
+            $table->decimal('line_total', 12, 2);
+            $table->timestamps();
+
+            $table->index(['invoice_id', 'id']);
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('invoice_items');
+    }
+};
+
+========== 2026_11_07_072306_create_payments_table.php ==========
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('payments', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('invoice_id')->constrained()->restrictOnDelete();
+            $table->foreignId('recorded_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->decimal('amount', 12, 2);
+            $table->string('method', 30);
+            $table->string('status', 20)->default('pending');
+            $table->string('reference')->nullable();
+            $table->dateTime('paid_at')->nullable();
+            $table->text('notes')->nullable();
+            $table->timestamps();
+
+            $table->index(['invoice_id', 'status']);
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('payments');
+    }
+};
