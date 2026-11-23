@@ -11,6 +11,7 @@ services:
     runtime: docker
     plan: free
     region: frankfurt
+    rootDir: backend-laravel
     dockerfilePath: ./Dockerfile
     healthCheckPath: /up
     envVars:

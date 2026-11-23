@@ -12,7 +12,7 @@ RUN npm run build
 # ==========================================
 # Étape 2 : Image PHP Apache Production
 # ==========================================
-FROM php:8.3-apache
+FROM php:8.4-apache
 
 # Installation des dépendances système et extensions PHP nécessaires
 RUN apt-get update && apt-get install -y --no-install-recommends \
